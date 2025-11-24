@@ -4,7 +4,7 @@ Projekt e-commerce z backendem w Laravel i frontendem w Svelte, uruchamiany w Do
 
 ## Struktura projektu
 
-- `laravel/` – backend Laravel
+- `laravel_project/` – backend Laravel
 - `svelte-app/` – frontend Svelte (Vite)
 - `docker-compose.yml` – konfiguracja Docker Compose
 - `.env.example` – przykład konfiguracji środowiskowej
