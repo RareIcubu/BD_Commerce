@@ -1,0 +1,32 @@
+# Node / Svelte
+node_modules/
+dist/
+.svelte-kit/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Laravel / PHP
+vendor/
+.env
+.phpunit.result.cache
+/storage/*.key
+/storage/framework/cache/data/*
+/storage/logs/*
+/storage/tmp/*
+/bootstrap/cache/*.php
+
+# Docker
+docker-compose.override.yml
+docker-compose.override.yml
+*.env
+*.log
+
+# System
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
