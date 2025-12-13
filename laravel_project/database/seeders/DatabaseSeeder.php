@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+use Database\Seeders\RoleSeeder;
+
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
@@ -15,11 +17,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            RoleSeeder::class, 
+            TagSeeder::class,
+            UserSeeder::class, 
+            ProductSeeder::class, 
+            CartSeeder::class, 
+            OrderSeeder::class,
+            ProductTagSeeder::class,
+            OrderProductSeeder::class,
+            CartProductSeeder::class,
         ]);
     }
 }
