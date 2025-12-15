@@ -12,12 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tags', function (Blueprint $table) {
-            $table->id('tag_id');
-            $table->string('name', 50)->unique();
+            $table->id('tag_id'); // To tworzy kolumnę 'id'
+            $table->string('name'); //
             $table->timestamps();
         });
     }
-
     /**
      * Reverse the migrations.
      */
