@@ -41,7 +41,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $password = \Illuminate\Support\Facades\Hash::make('password');
-        $users = User::factory()->count(1000)->create([
+        $users = User::factory()->count(50)->create([
             'role_id' => 1,
             'password' => $password,
         ]);
@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
 
         // 5. Zamówienia (Symulacja: tylko 200 z 1000 użytkowników coś kupiło)
         // Bierzemy 200 losowych userów z naszej puli 1000
-        $activeShoppers = $users->random(200);
+        $activeShoppers = $users->random(10);
 
         // Dodajemy też zamówienia dla naszego testowego klienta
         $activeShoppers->push($client);
