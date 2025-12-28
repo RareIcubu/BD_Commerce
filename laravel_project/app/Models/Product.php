@@ -4,16 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Product extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Pozwala na masowe przypisywanie wszystkich pól
+    protected $primaryKey = 'product_id'; // Ważne: niestandardowy klucz
+    protected $guarded = [];
 
-    // Relacja z tagami (N:M)
-    public function tags()
+    // Relacja: Produkt należy do Kategorii
+    public function category(): BelongsTo
     {
-        return $this->belongsToMany(Tag::class, 'product_tag','product_id','tag_id');
+        return $this->belongsTo(Category::class, 'category_id', 'category_id');
+    }
+
+    // Relacja: Produkt ma wiele Tagów
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'product_tag', 'product_id', 'tag_id');
+    }
+
+    // Relacja: Produkt należy do Sprzedawcy (User)
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_id', 'user_id');
     }
 }
