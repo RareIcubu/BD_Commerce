@@ -52,7 +52,7 @@ class DatabaseSeeder extends Seeder
         $products = Product::factory()
             ->count(50)
             ->state(fn () => [
-                'seller_id' => $seller->id,
+                'seller_id' => $seller->user_id,
                 'category_id' => $categories->random()->category_id,
             ])
             ->create();

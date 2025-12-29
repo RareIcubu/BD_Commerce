@@ -1,6 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-
+    import { user } from '../../stores';
     let cartItems: any[] = [];
     let total = 0;
     let loading = true;
@@ -24,9 +24,16 @@
     }
 
     // Złóż zamówienie
-    async function checkout() {
+   async function checkout() {
+        // Sprawdź czy user jest zalogowany
+        if (!$user) {
+            alert("Musisz być zalogowany, aby złożyć zamówienie!");
+            window.location.href = '/login';
+            return;
+        }
+
         const sessionId = localStorage.getItem('session_id') || '';
-        if(!confirm(`Czy na pewno chcesz złożyć zamówienie na kwotę ${total} PLN?`)) return;
+        if(!confirm(`Potwierdzasz zakup?`)) return;
 
         try {
             const res = await fetch('http://localhost:8000/api/checkout', {
@@ -35,9 +42,9 @@
                     'Content-Type': 'application/json',
                     'X-Session-ID': sessionId 
                 },
-                body: JSON.stringify({ user_id: 1 }) // Hardcoded user dla testów
-            });
-            
+                // TUTAJ ZMIANA: używamy $user.user_id zamiast "1"
+                body: JSON.stringify({ user_id: $user.user_id }) 
+            });            
             const data = await res.json();
             
             if (res.ok) {

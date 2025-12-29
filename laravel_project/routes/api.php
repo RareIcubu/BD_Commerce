@@ -3,7 +3,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SellerController;
-
+use App\Http\Controllers\AuthController;
 // --- PRODUKTY (Dla wszystkich) ---
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
@@ -20,3 +20,6 @@ Route::get('/orders', [OrderController::class, 'history']);     // Historia
 Route::post('/seller/products', [SellerController::class, 'store']);
 Route::put('/seller/products/{id}', [SellerController::class, 'update']);
 Route::delete('/seller/products/{id}', [SellerController::class, 'destroy']);
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
