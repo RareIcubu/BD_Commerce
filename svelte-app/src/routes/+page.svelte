@@ -35,7 +35,27 @@
       loading = false;
     }
   }
+async function addToCart(productId: number) {
+      const sessionId = localStorage.getItem('session_id') || '';
+      
+      const res = await fetch('http://localhost:8000/api/cart', {
+          method: 'POST',
+          headers: { 
+              'Content-Type': 'application/json',
+              'X-Session-ID': sessionId 
+          },
+          body: JSON.stringify({ 
+              product_id: productId, 
+              quantity: 1 
+          })
+      });
 
+      if (res.ok) {
+          alert('Dodano produkt do koszyka!');
+      } else {
+          alert('Błąd dodawania do koszyka.');
+      }
+  } 
   onMount(() => {
     fetchProducts();
   });
@@ -92,7 +112,7 @@
 
             <div class="flex justify-between items-center mt-4">
               <span class="text-xl font-bold">{product.price} PLN</span>
-              <button class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+              <button on:click={() => addToCart(product.product_id)} class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
                 Do koszyka
               </button>
             </div>
