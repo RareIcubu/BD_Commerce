@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
             'password' => $password,
         ]);
 
-        echo "Wygenerowano 1000 użytkowników.\n";
+        echo "Wygenerowano 20 użytkowników.\n";
 
         // 4. Produkty (50 sztuk od naszego sprzedawcy)
         $products = Product::factory()
@@ -90,6 +90,6 @@ class DatabaseSeeder extends Seeder
                 });
         }
 
-        echo "Wygenerowano zamówienia dla 200 użytkowników.\n";
+        echo "Wygenerowano zamówienia dla 10 użytkowników.\n";
     }
 }

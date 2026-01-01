@@ -1,39 +1,62 @@
-# BD Commerce
+﻿# Aplikacja Sklep.io
 
-Projekt e-commerce z backendem w Laravel i frontendem w Svelte, uruchamiany w Dockerze.
+Platforma sprzedażowa zbudowana w architekturze rozdzielonej, wykorzystująca **Laravel** jako silnik API oraz **Svelte** jako interfejs użytkownika. Całość środowiska utrzymywana jest w pełni w kontenerach **Docker**. System opiera się na relacyjnym modelu danych zaimplementowanym w MySQL. 
 
-## Struktura projektu
+## Tech Stack
 
-- `laravel_project/` – backend Laravel
-- `svelte-app/` – frontend Svelte (Vite)
-- `docker-compose.yml` – konfiguracja Docker Compose
-- `.env.example` – przykład konfiguracji środowiskowej
+| Warstwa | Technologia |
+| :--- | :--- |
+| **Backend** | Laravel 11 (PHP 8.3) |
+| **Frontend** | Svelte / SvelteKit |
+| **Baza Danych** | MySQL 8.4 |
+| **Konteneryzacja** | Docker & Docker Compose |
+| **Komunikacja** | REST API / JSON |
 
-## Wymagania
 
-- Docker i Docker Compose
-- Node.js (opcjonalnie do lokalnego uruchamiania frontend)
-- PHP (opcjonalnie do lokalnego uruchamiania backend)
+## Instalacja i Konfiguracja
 
-## Uruchamianie projektu
+### Wymagania:
+* Docker & Docker Desktop
+* Git
+* Node.js (opcjonalnie do lokalnego uruchamiania frontend)
+* PHP (opcjonalnie do lokalnego uruchamiania backend)
 
-1. Skopiuj przykładowy `.env`:
-   ```bash
-    cp .env.example .env
+### Kroki instalacyjne:
 
-2. Uzupełnij wartości (bazy danych, hasła itd.).
-
-    Zbuduj i uruchom kontenery:
+1.  **Klonowanie repozytorium:**
     ```bash
-    docker compose up --build
+    git clone https://github.com/RareIcubu/BD_Commerce.git
+    cd BD_Commerce
+    ```
 
-3. Dostęp do aplikacji:
+2.  **Konfiguracja środowiska:**
+    Skopiuj plik `.env.example` i upewnij się, że dane bazy danych są zgodne z tymi w `docker-compose.yml`:
+    ```bash
+    cp .env.example .env
+    ```
 
-- Backend Laravel: http://localhost:8000
-- Frontend Svelte: http://localhost:5173
-- phpMyAdmin: http://localhost:8080 (login i hasło z .env)
-## Tworzenie migracji i seedów Laravel
+3.  **Uruchomienie kontenerów:**
+    ```bash
+    docker compose up -d
+    ```
 
-```bash
-    docker compose exec laravle_app php artisan migrate
-    docker compose exec laravel_app php artisam db:seed
+4.  **Inicjalizacja aplikacji (Migracje i Dane):**
+    Załaduj zmienne środowiskowe i przygotuj bazę danych (komendy uruchamiane wewnątrz kontenera):
+    ```bash
+    # Eksport zmiennych (macOS/Linux)
+    export $(grep -v '^#' .env | xargs)
+
+    # Instalacja i migracja
+    docker compose run --rm laravel_app composer install
+    docker compose run --rm laravel_app php artisan key:generate
+    docker compose run --rm laravel_app php artisan migrate --seed
+    ```
+
+## Dostęp do aplikacji
+
+* Backend Laravel: http://localhost:8000
+* Frontend Svelte: http://localhost:5173
+* phpMyAdmin: http://localhost:8080 (login i hasło z .env)
+
+## Licencja
+Projekt realizowany w celach edukacyjnych w ramach przedmiotu Bazy Danych na Politechnice Wrocławskiej.
