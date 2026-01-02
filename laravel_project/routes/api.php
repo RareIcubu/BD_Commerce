@@ -11,6 +11,7 @@ Route::get('/products/{id}', [ProductController::class, 'show']);
 // --- KOSZYK ---
 Route::get('/cart', [CartController::class, 'index']); // Pobierz koszyk
 Route::post('/cart', [CartController::class, 'add']);  // Dodaj do koszyka
+Route::delete('/cart/{product_id}', [CartController::class, 'destroy']); // Usuń z koszyka
 
 // --- ZAMÓWIENIA ---
 Route::post('/checkout', [OrderController::class, 'checkout']); // Kup

@@ -9,11 +9,17 @@ export interface Product {
     tags: { name: string }[];
   }
 
+export interface Category {
+    category_id: number;
+    name: string;
+  }
+
 
 export const products = writable<Product[]>([]);
 export const searchTerm = writable('');
 export const loading = writable(false);
 export const error = writable<string | null>(null);
+export const categories = writable<Category[]>([]);
 
 products.set([]); 
 
@@ -38,5 +44,22 @@ export async function fetchProducts(search = '') {
         }
     } finally {
         loading.set(false);
+    }
+}
+
+export async function fetchCategories() {
+    try {
+        const res = await fetch('http://localhost:8000/api/categories');
+        if (!res.ok) throw new Error('Błąd pobierania kategorii');
+        
+        const result = await res.json();
+        
+        const categoryData = Array.isArray(result) ? result : (result.data || []);
+        
+        categories.set(categoryData);
+        console.log("Categories in store:", categoryData);
+    } catch (err) {
+        console.error("Failed to load categories", err);
+        categories.set([]);
     }
 }

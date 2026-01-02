@@ -68,4 +68,17 @@ class CartController extends Controller
             'total' => $total
         ]);
     }
+    
+    public function destroy(Request $request, $productId)
+    {
+        $sessionId = $request->header('X-Session-ID');
+        $cart = Cart::where('session_id', $sessionId)->first();
+        
+        if ($cart) {
+            $cart->products()->detach($productId);
+            return response()->json(['message' => 'Removed successfully']);
+        }
+
+        return response()->json(['error' => 'Cart not found'], 404);    
+    }
 }

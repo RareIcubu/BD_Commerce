@@ -59,6 +59,29 @@
         }
     }
 
+    async function removeFromCart(productId: number) {
+        const sessionId = localStorage.getItem('session_id') || '';
+        
+        try {
+            const res = await fetch(`http://localhost:8000/api/cart/${productId}`, {
+                method: 'DELETE',
+                headers: { 
+                    'X-Session-ID': sessionId 
+                }
+            });
+
+            if (res.ok) {
+                // Po udanym usunięciu, pobierz koszyk na nowo, aby zaktualizować widok i sumę
+                await fetchCart();
+            } else {
+                const data = await res.json();
+                alert(data.error || 'Nie udało się usunąć produktu.');
+            }
+        } catch (e) {
+            console.error('Błąd przy usuwaniu z koszyka:', e);
+        }
+    }
+
     onMount(fetchCart);
 </script>
 
@@ -84,6 +107,7 @@
                     <th class="p-4">Cena</th>
                     <th class="p-4">Ilość</th>
                     <th class="p-4">Suma</th>
+                    <th class="p-4 text-center">Akcje</th>
                 </tr>
             </thead>
             <tbody>
@@ -93,6 +117,17 @@
                         <td class="p-4">{item.price} PLN</td>
                         <td class="p-4">{item.pivot.quantity}</td>
                         <td class="p-4 font-bold">{(item.price * item.pivot.quantity).toFixed(2)} PLN</td>
+                        <td class="p-4 text-center">
+                            <button 
+                                on:click={() => removeFromCart(item.product_id)} 
+                                class="text-red-500 hover:text-red-700 font-medium p-2 transition"
+                                title="Usuń z koszyka"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </td>
                     </tr>
                 {/each}
             </tbody>
