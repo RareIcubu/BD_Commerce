@@ -4,9 +4,14 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CategoryController;
+
 // --- PRODUKTY (Dla wszystkich) ---
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
+
+// --- KATEGORIE ---
+Route::get('/categories', [CategoryController::class, 'index']);
 
 // --- KOSZYK ---
 Route::get('/cart', [CartController::class, 'index']); // Pobierz koszyk

@@ -23,30 +23,39 @@ export const categories = writable<Category[]>([]);
 
 products.set([]); 
 
-export async function fetchProducts(search = '') {
+export async function fetchProducts(query = '') {
     loading.set(true);
     error.set(null);
     try {
+        // Tworzymy obiekt URL, co ułatwia dodawanie parametrów
         const url = new URL('http://localhost:8000/api/products');
-        if (search) url.searchParams.append('search', search);
+
+        if (query) {
+            // SPRAWDZENIE: Czy query wygląda jak parametr techniczny (ma znak "=")?
+            if (query.includes('=')) {
+                // Jeśli tak (np. "category_id=1"), dzielimy to i dodajemy jako parametr
+                const [key, value] = query.split('=');
+                url.searchParams.append(key, value);
+            } else {
+                // Jeśli nie, traktujemy to jako zwykłe wyszukiwanie tekstowe
+                url.searchParams.append('search', query);
+            }
+        }
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error('Błąd pobierania danych');
         
         const data = await res.json();
+        
+        // Backend z paginacją zwraca dane w polu 'data'
         products.set(data.data); 
-
     } catch (err) {
-        if (err instanceof Error) {
-            error.set(err.message);
-        } else {
-            error.set("Wystąpił nieoczekiwany błąd");
-        }
+        console.error(err); // Warto widzieć błąd w konsoli
+        error.set((err as Error).message);
     } finally {
         loading.set(false);
     }
 }
-
 export async function fetchCategories() {
     try {
         const res = await fetch('http://localhost:8000/api/categories');

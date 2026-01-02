@@ -27,7 +27,7 @@
 
   async function filterByCategory(id: number) {
         searchTerm.set('');
-        await goto('/products');
+        await goto('/');
         fetchProducts(`category_id=${id}`);
     }
 </script>
