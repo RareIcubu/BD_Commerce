@@ -1,40 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { products, loading, error, fetchProducts, type Product} from '../lib/productStores'
 
-  // Typ dla produktu
-  interface Product {
-    product_id: number;
-    name: string;
-    price: string;
-    front_image: string;
-    category: { name: string };
-    tags: { name: string }[];
-  }
-
-  let products: Product[] = [];
-  let loading = true;
-  let error: string | null = null;
+  
+  //let products: Product[] = [];
+  //let loading = true;
+  //let error: string | null = null;
   let searchTerm = '';
 
-  // Funkcja pobierająca dane z Laravela
-  async function fetchProducts(search = '') {
-    loading = true;
-    try {
-      // Używamy localhost, bo to przeglądarka użytkownika wykonuje zapytanie
-      const url = new URL('http://localhost:8000/api/products');
-      if (search) url.searchParams.append('search', search);
-
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error('Błąd pobierania danych');
-      
-      const data = await res.json();
-      products = data.data; // Laravel paginate zwraca dane w polu 'data'
-    } catch (err) {
-      error = (err as Error).message;
-    } finally {
-      loading = false;
-    }
-  }
+  
 async function addToCart(productId: number) {
       const sessionId = localStorage.getItem('session_id') || '';
       
@@ -61,7 +35,10 @@ async function addToCart(productId: number) {
   });
 
   function handleSearch() {
-    fetchProducts(searchTerm);
+    const cleanTerm = searchTerm.startsWith('#') 
+        ? searchTerm.slice(1) 
+        : searchTerm;
+    fetchProducts(cleanTerm);
   }
 </script>
 
@@ -83,13 +60,15 @@ async function addToCart(productId: number) {
     </button>
   </div>
 
-  {#if loading}
+  {#if $loading}
     <p>Ładowanie produktów...</p>
-  {:else if error}
+  {:else if $products.length === 0}
+    <p>Nie znaleziono żadnych produktów.</p>
+  {:else if $error}
     <p class="text-red-500">Błąd: {error}</p>
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {#each products as product}
+      {#each $products as product}
         <div class="border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition">
           <img 
             src={product.front_image || 'https://placehold.co/600x400'} 

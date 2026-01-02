@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { searchTerm, fetchProducts } from '../lib/productStores'
     import { onMount } from 'svelte';
     import { user } from '../stores';
     import '../app.css';
@@ -23,7 +24,12 @@
             <a href="/" class="text-xl font-bold text-blue-600">Sklep.io</a>
             
             <div class="flex gap-4 text-sm font-medium text-gray-600 items-center">
-                <a href="/" class="hover:text-blue-600">Produkty</a>
+                <!-- <a href="/" class="hover:text-blue-600">Produkty</a>-->
+                 <a href="/products" on:click|preventDefault={() => { 
+                    searchTerm.set('');
+                    fetchProducts('');
+                    }}
+                    class="nav-link">Produkty</a>
                 <a href="/cart" class="hover:text-blue-600">Koszyk</a>
                 
                 {#if $user}
