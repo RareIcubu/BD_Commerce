@@ -15,10 +15,11 @@ export const searchTerm = writable('');
 export const loading = writable(false);
 export const error = writable<string | null>(null);
 
+products.set([]); 
+
 export async function fetchProducts(search = '') {
     loading.set(true);
     error.set(null);
-
     try {
         const url = new URL('http://localhost:8000/api/products');
         if (search) url.searchParams.append('search', search);

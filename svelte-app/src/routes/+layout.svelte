@@ -2,6 +2,7 @@
     import { searchTerm, fetchProducts } from '../lib/productStores'
     import { onMount } from 'svelte';
     import { user } from '../stores';
+    import { goto } from '$app/navigation';
     import '../app.css';
 
     onMount(() => {
@@ -16,19 +17,22 @@
         user.set(null);
         window.location.href = '/';
     }
+
+    async function resetToProducts() {
+    searchTerm.set('');
+    await goto('/');
+    fetchProducts('');
+  }
 </script>
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <nav class="bg-white shadow-sm border-b">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold text-blue-600">Sklep.io</a>
+            <a href="/products" on:click|preventDefault={resetToProducts} 
+                    class="text-xl font-bold text-blue-600">Sklep.io</a>
             
             <div class="flex gap-4 text-sm font-medium text-gray-600 items-center">
-                <!-- <a href="/" class="hover:text-blue-600">Produkty</a>-->
-                 <a href="/products" on:click|preventDefault={() => { 
-                    searchTerm.set('');
-                    fetchProducts('');
-                    }}
+                 <a href="/products" on:click|preventDefault={resetToProducts}
                     class="nav-link">Produkty</a>
                 <a href="/cart" class="hover:text-blue-600">Koszyk</a>
                 
