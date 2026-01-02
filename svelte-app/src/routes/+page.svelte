@@ -60,11 +60,11 @@ async function addToCart(productId: number) {
     </button>
   </div>
 
-  {#if loading}
+  {#if $loading}
     <p>Ładowanie produktów...</p>
   {:else if $products.length === 0}
     <p>Nie znaleziono żadnych produktów.</p>
-  {:else if error}
+  {:else if $error}
     <p class="text-red-500">Błąd: {error}</p>
   {:else}
     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
