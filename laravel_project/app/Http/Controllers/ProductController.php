@@ -43,10 +43,26 @@ class ProductController extends Controller
 
         return response()->json($query->paginate(12));
     }
-
+    
     public function show($id)
     {
         $product = Product::with(['category', 'tags', 'seller'])->findOrFail($id);
         return response()->json($product);
+    }
+
+    public function showOnPage($id)
+    {
+        $product = \App\Models\Product::with(['category', 'tags', 'seller'])->findOrFail($id);
+
+        
+        $suggested = \App\Models\Product::where('category_id', $product->category_id)
+            ->where('product_id', '!=', $id) 
+            ->limit(6)
+            ->get();
+
+        return response()->json([
+            'product' => $product,
+            'suggested' => $suggested
+        ]);
     }
 }

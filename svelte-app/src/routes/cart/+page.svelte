@@ -6,7 +6,6 @@
     let loading = true;
     let message = '';
 
-    // Pobierz koszyk
     async function fetchCart() {
         const sessionId = localStorage.getItem('session_id') || '';
         try {
@@ -23,9 +22,7 @@
         }
     }
 
-    // Złóż zamówienie
    async function checkout() {
-        // Sprawdź czy user jest zalogowany
         if (!$user) {
             alert("Musisz być zalogowany, aby złożyć zamówienie!");
             window.location.href = '/login';
@@ -42,7 +39,6 @@
                     'Content-Type': 'application/json',
                     'X-Session-ID': sessionId 
                 },
-                // TUTAJ ZMIANA: używamy $user.user_id zamiast "1"
                 body: JSON.stringify({ user_id: $user.user_id }) 
             });            
             const data = await res.json();
@@ -60,6 +56,12 @@
     }
 
     async function removeFromCart(productId: number) {
+        console.log("Attempting to remove product with ID:", productId);
+        if (!productId) {
+            console.error("No product ID provided!");
+            return;
+        }
+
         const sessionId = localStorage.getItem('session_id') || '';
         
         try {
@@ -71,7 +73,6 @@
             });
 
             if (res.ok) {
-                // Po udanym usunięciu, pobierz koszyk na nowo, aby zaktualizować widok i sumę
                 await fetchCart();
             } else {
                 const data = await res.json();

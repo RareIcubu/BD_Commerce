@@ -2,7 +2,7 @@
     let name = '';
     let description = '';
     let price = '';
-    let category_id = '1'; // Domyślna kategoria
+    let category_id = '1';
     let message = '';
 
     async function addProduct() {

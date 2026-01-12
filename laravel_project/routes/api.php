@@ -1,14 +1,16 @@
 <?php
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\Api\AdminController;
 
 // --- PRODUKTY (Dla wszystkich) ---
 Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::get('/products/{id}', [ProductController::class, 'showOnPage']);
 
 // --- KATEGORIE ---
 Route::get('/categories', [CategoryController::class, 'index']);
@@ -29,3 +31,8 @@ Route::delete('/seller/products/{id}', [SellerController::class, 'destroy']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::prefix('admin')->group(function () {
+    Route::get('/users', [AdminController::class, 'index']);
+    Route::patch('/users/{user}/role', [AdminController::class, 'updateRole']);
+});

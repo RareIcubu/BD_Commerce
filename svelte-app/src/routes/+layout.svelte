@@ -8,7 +8,6 @@
     onMount(() => {
         let sessionId = localStorage.getItem('session_id');
         if (!sessionId) {
-            // Prosty generator ID sesji dla przeglądarki
             sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
             localStorage.setItem('session_id', sessionId);
         }

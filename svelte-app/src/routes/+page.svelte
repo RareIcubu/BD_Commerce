@@ -2,10 +2,6 @@
   import { onMount } from 'svelte';
   import { products, loading, error, fetchProducts, type Product} from '../lib/productStores'
 
-  
-  //let products: Product[] = [];
-  //let loading = true;
-  //let error: string | null = null;
   let searchTerm = '';
 
   

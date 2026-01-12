@@ -17,8 +17,8 @@
             const data = await res.json();
 
             if (res.ok) {
-                user.set(data.user); // Zapisz usera w globalnym store
-                goto('/'); // Przekieruj na stronę główną
+                user.set(data.user); 
+                goto('/');
             } else {
                 error = data.message || 'Błąd logowania';
             }

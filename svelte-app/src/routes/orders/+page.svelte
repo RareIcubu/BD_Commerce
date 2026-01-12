@@ -6,11 +6,8 @@
     let loading = true;
 
     onMount(async () => {
-        // Jeśli nie zalogowany -> przekieruj (opcjonalnie)
         if (!$user) return;
 
-        // Pobieramy zamówienia przekazując user_id w query params
-        // W prawdziwym API REST robiłoby się to przez token, tutaj prosto:
         const res = await fetch(`http://localhost:8000/api/orders?user_id=${$user.user_id}`);
         if (res.ok) {
             orders = await res.json();

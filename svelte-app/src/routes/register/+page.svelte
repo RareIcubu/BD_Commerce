@@ -8,7 +8,7 @@
     let message = '';
 
    async function handleRegister() {
-        console.log("Wysyłanie rejestracji..."); // Log startu
+        console.log("Wysyłanie rejestracji...");
         try {
             const res = await fetch('http://localhost:8000/api/register', {
                 method: 'POST',
@@ -16,13 +16,12 @@
                 body: JSON.stringify({ name, surname, email, password })
             });
             
-            console.log("Status:", res.status); // Log statusu
+            console.log("Status:", res.status);
 
             if (res.ok) {
                 alert('Konto utworzone! Możesz się zalogować.');
                 goto('/login');
             } else {
-                // To jest kluczowe - obsługa błędu gdy odpowiedź nie jest JSONem
                 const text = await res.text();
                 try {
                     const data = JSON.parse(text);
