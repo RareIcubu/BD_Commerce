@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\AdminController;
 use App\Models\Tag; // <--- WAŻNE: Dodaj ten import, żeby szybka trasa tagów zadziałała
 
 // --- PRODUKTY (Dla wszystkich) ---
+Route::get('/products/featured', [ProductController::class, 'featured']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'showOnPage']);
 
