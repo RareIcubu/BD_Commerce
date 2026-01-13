@@ -12,8 +12,8 @@ class OrderFactory extends Factory
         return [
             'user_id' => User::factory(),
             'status' => fake()->randomElement(['pending', 'paid', 'shipped', 'completed']), //
-            'price_total' => 0, // To policzymy dynamicznie w Seederze po dodaniu produktów
-            'ordered_at' => fake()->dateTimeBetween('-1 year', 'now'),
+            'total_price' => 0, // To policzymy dynamicznie w Seederze po dodaniu produktów
+            'created_at' => fake()->dateTimeBetween('-1 year', 'now'),
         ];
     }
 }

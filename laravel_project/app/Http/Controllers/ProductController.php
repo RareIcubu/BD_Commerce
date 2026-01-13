@@ -2,36 +2,40 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\Product; // <-- Upewnij się, że to tu jest!
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
+    // 1. Lista produktów (API dla strony głównej)
     public function index(Request $request)
     {
         $query = Product::query();
 
-        // Eager loading dla wydajności (pobierz od razu kategorie i tagi)
+        // Pobieramy relacje od razu (Eager Loading)
         $query->with(['category', 'tags']);
 
         // Tylko aktywne produkty
         $query->where('is_active', true);
 
-        // Filtrowanie po kategorii
-        if ($request->has('category_id')) {
+        // --- FILTR KATEGORII ---
+        if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        // Filtrowanie po tagach (jeśli podano listę tagów po przecinku)
-        if ($request->has('tags')) {
+        // --- FILTR TAGÓW (Poprawiony) ---
+        if ($request->filled('tags')) {
+            // Frontend wysyła ID po przecinku: "1,5,8"
             $tags = explode(',', $request->tags);
+
             $query->whereHas('tags', function ($q) use ($tags) {
-                $q->whereIn('name', $tags);
+                // Szukamy po 'tag_id', a nie po 'name', bo frontend wysyła numery ID
+                $q->whereIn('tags.tag_id', $tags);
             });
         }
 
-        // Wyszukiwanie (WB.03 / 5.4 ze specyfikacji)
-        if ($request->has('search')) {
+        // --- WYSZUKIWARKA ---
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
@@ -41,23 +45,24 @@ class ProductController extends Controller
             });
         }
 
+        // Zwracamy paginację (Laravel sam zrobi JSON z polami 'data', 'links' itd.)
         return response()->json($query->paginate(12));
     }
-    
-    public function show($id)
-    {
-        $product = Product::with(['category', 'tags', 'seller'])->findOrFail($id);
-        return response()->json($product);
-    }
 
+    // 2. Metoda dla pojedynczego produktu (Szczegóły + Rekomendacje)
     public function showOnPage($id)
     {
-        $product = \App\Models\Product::with(['category', 'tags', 'seller'])->findOrFail($id);
+        // Pobieramy produkt (musi być aktywny)
+        $product = Product::with(['category', 'tags', 'seller'])
+            ->where('is_active', true)
+            ->findOrFail($id); // Jeśli nie znajdzie -> 404 (nie 500)
 
-        
-        $suggested = \App\Models\Product::where('category_id', $product->category_id)
-            ->where('product_id', '!=', $id) 
-            ->limit(6)
+        // Pobieramy sugestie (inne produkty z tej samej kategorii)
+        $suggested = Product::where('category_id', $product->category_id)
+            ->where('product_id', '!=', $id) // Nie ten sam co główny
+            ->where('is_active', true)     // Tylko dostępne
+            ->inRandomOrder()              // Losowa kolejność dla lepszego UX
+            ->limit(4)                     // 4 sztuki
             ->get();
 
         return response()->json([

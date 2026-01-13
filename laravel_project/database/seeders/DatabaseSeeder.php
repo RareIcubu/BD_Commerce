@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
                         ]);
                         $total += $qty * $price;
                     }
-                    $order->update(['price_total' => $total]);
+                    $order->update(['total_price' => $total]);
                 });
         }
 

@@ -3,82 +3,101 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
-use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
-    // Pomocnicza funkcja do pobierania koszyka (dla zalogowanego lub gościa)
+    // Helper: Pobierz lub stwórz koszyk
     private function getCart(Request $request)
     {
-        // Zakładamy, że frontend przesyła session_id (np. UUID generowany w Svelte)
-        // lub user_id jeśli jest autoryzacja. Tu upraszczamy do session_id dla demo.
         $sessionId = $request->header('X-Session-ID');
+        if (!$sessionId) return null;
 
         return Cart::firstOrCreate(['session_id' => $sessionId]);
     }
 
-    // TRANS. 5.5: Dodawanie produktu do koszyka
+    // GET /api/cart
+    public function index(Request $request)
+    {
+        $cart = $this->getCart($request);
+        if (!$cart) return response()->json([]);
+
+        // Pobieramy produkty w koszyku
+        $items = $cart->items;
+
+        // Frontend Svelte oczekuje tablicy obiektów, gdzie każdy ma pole 'product' i 'quantity'.
+        // Eloquent przy relacji belongsToMany zwraca listę produktów, gdzie ilość jest ukryta w 'pivot'.
+        // Musimy to przemapować:
+        $formattedItems = $items->map(function ($product) use ($cart) {
+            return [
+                'cart_id' => $cart->cart_id,
+                'product_id' => $product->product_id,
+                'quantity' => $product->pivot->quantity, // Ilość bierzemy z tabeli łączącej
+                'product' => $product // Cały obiekt produktu wstawiamy jako pole 'product'
+            ];
+        });
+
+        return response()->json($formattedItems);
+    }
+
+    // POST /api/cart
     public function add(Request $request)
     {
         $cart = $this->getCart($request);
         $productId = $request->input('product_id');
         $quantity = $request->input('quantity', 1);
 
-        // Sprawdź czy produkt istnieje w koszyku
-        $existingItem = DB::table('cart_product')
-            ->where('cart_id', $cart->cart_id)
-            ->where('product_id', $productId)
-            ->first();
+        // Sprawdzamy, czy ten produkt już jest w koszyku (przez relację items)
+        // where('products.product_id') jest bezpieczniejsze przy joinach, ale tu wystarczy po prostu sprawdzenie kolekcji
+        // lub zapytanie:
+        $existingProduct = $cart->items()->where('cart_product.product_id', $productId)->first();
 
-        if ($existingItem) {
-            // SQL: UPDATE Cart_Item SET quantity = ...
-            DB::table('cart_product')
-                ->where('cart_product_id', $existingItem->cart_product_id)
-                ->increment('quantity', $quantity);
+        if ($existingProduct) {
+            // Produkt jest - aktualizujemy ilość
+            // Pobieramy starą ilość z pivot i dodajemy nową
+            $newQuantity = $existingProduct->pivot->quantity + $quantity;
+
+            $cart->items()->updateExistingPivot($productId, [
+                'quantity' => $newQuantity
+            ]);
         } else {
-            // SQL: INSERT INTO Cart_Item ...
-            DB::table('cart_product')->insert([
-                'cart_id' => $cart->cart_id,
-                'product_id' => $productId,
+            // Produktu nie ma - dodajemy (attach)
+            $cart->items()->attach($productId, [
                 'quantity' => $quantity
             ]);
         }
 
         return response()->json(['message' => 'Dodano do koszyka']);
     }
+    public function update(Request $request, $productId)
+    {
+        $cart = $this->getCart($request);
+        $quantity = (int) $request->input('quantity');
 
-    // TRANS. 5.6: Wyświetlanie koszyka i sumy
-    public function index(Request $request)
+        if ($cart) {
+            if ($quantity <= 0) {
+                // Jeśli ilość <= 0, usuwamy produkt
+                $cart->items()->detach($productId);
+            } else {
+                // Aktualizujemy ilość w tabeli pivot
+                $cart->items()->updateExistingPivot($productId, [
+                    'quantity' => $quantity
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'Zaktualizowano ilość']);
+    }
+    // DELETE /api/cart/{id}
+    public function destroy(Request $request, $productId)
     {
         $cart = $this->getCart($request);
 
-        // Ładowanie produktów w koszyku
-        $cart->load('items');
-
-        // Wyznaczanie ostatecznej ceny (SQL: SUM(quantity * price))
-        $total = $cart->items->sum(function($item) {
-            return $item->pivot->quantity * $item->price;
-        });
-
-        return response()->json([
-            'items' => $cart->items,
-            'total' => $total
-        ]);
-    }
-
-    public function destroy(Request $request, $productId)
-    {
-        $sessionId = $request->header('X-Session-ID');
-        $cart = Cart::where('session_id', $sessionId)->first();
-
         if ($cart) {
+            // Odłączamy produkt (usuwamy z tabeli pivot)
             $cart->items()->detach($productId);
-            return response()->json(['message' => 'Removed successfully']);
         }
 
-        return response()->json(['error' => 'Cart not found'], 404);
+        return response()->json(['message' => 'Usunięto z koszyka']);
     }
 }

@@ -25,6 +25,7 @@ Route::get('/tags', function() {
 // --- KOSZYK ---
 Route::get('/cart', [CartController::class, 'index']);
 Route::post('/cart', [CartController::class, 'add']);
+Route::put('/cart/{product_id}', [CartController::class, 'update']);
 Route::delete('/cart/{product_id}', [CartController::class, 'destroy']);
 
 // --- ZAMÓWIENIA ---

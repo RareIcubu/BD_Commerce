@@ -1,62 +1,83 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { user } from '../../stores';
+    import { notifications } from '$lib/notificationStore';
 
-    let orders: any[] = [];
-    let loading = true;
+    // Prosty typ zamówienia
+    type Order = {
+        id: number;
+        created_at: string;
+        total_price: string;
+        status: string;
+    };
 
-    onMount(async () => {
-        if (!$user) return;
+    let orders: Order[] = [];
+    let isLoading = true;
 
-        const res = await fetch(`http://localhost:8000/api/orders?user_id=${$user.user_id}`);
-        if (res.ok) {
-            orders = await res.json();
+    const API_URL = 'http://localhost:8000/api';
+
+    async function loadOrders() {
+        // Wymagane logowanie - tu zakładamy, że token/sesja jest wysyłana automatycznie przez cookies
+        // lub (jeśli używasz tokenów Bearer) musisz dodać nagłówek Authorization
+        try {
+            const res = await fetch(`${API_URL}/orders`); 
+            
+            if (res.ok) {
+                orders = await res.json();
+            } else {
+                // Jeśli 401 Unauthorized, przekieruj
+                if (res.status === 401) window.location.href = '/login';
+            }
+        } catch (e) {
+            notifications.add('Błąd pobierania historii.', 'error');
+        } finally {
+            isLoading = false;
         }
-        loading = false;
-    });
+    }
+
+    onMount(loadOrders);
 </script>
 
-<h1 class="text-3xl font-bold mb-6">Moje Zamówienia</h1>
+<div class="container mx-auto px-4 py-8 max-w-4xl min-h-[60vh]">
+    <h1 class="text-3xl font-bold mb-8 text-gray-800">Moje Zamówienia</h1>
 
-{#if loading}
-    <p>Ładowanie...</p>
-{:else if !$user}
-    <p>Zaloguj się, aby zobaczyć historię.</p>
-{:else if orders.length === 0}
-    <p>Nie masz jeszcze żadnych zamówień.</p>
-{:else}
-    <div class="space-y-6">
-        {#each orders as order}
-            <div class="bg-white border rounded-lg shadow-sm p-6">
-                <div class="flex justify-between items-center border-b pb-4 mb-4">
-                    <div>
-                        <span class="text-gray-500 text-sm">Zamówienie #</span>
-                        <span class="font-bold text-lg">{order.order_id}</span>
-                        <span class="ml-4 px-2 py-1 bg-gray-100 rounded text-sm status-{order.status}">
-                            {order.status}
-                        </span>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-500">{new Date(order.ordered_at).toLocaleDateString()}</div>
-                        <div class="font-bold text-xl">{order.price_total} PLN</div>
-                    </div>
-                </div>
-
-                <ul class="space-y-2">
-                    {#each order.products as product}
-                        <li class="flex justify-between text-sm">
-                            <span>{product.name} <span class="text-gray-400">x{product.pivot.quantity}</span></span>
-                            <span>{(product.pivot.price_when_purchased * product.pivot.quantity).toFixed(2)} PLN</span>
-                        </li>
+    {#if isLoading}
+        <div class="text-center py-10">Ładowanie...</div>
+    {:else if orders.length === 0}
+        <div class="bg-blue-50 p-8 rounded-lg text-blue-800 border border-blue-100">
+            Nie złożyłeś jeszcze żadnych zamówień.
+        </div>
+    {:else}
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+                    <tr>
+                        <th class="p-4 border-b">Nr Zamówienia</th>
+                        <th class="p-4 border-b">Data</th>
+                        <th class="p-4 border-b">Status</th>
+                        <th class="p-4 border-b text-right">Kwota</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#each orders as order}
+                        <tr class="hover:bg-gray-50 border-b last:border-0 transition">
+                            <td class="p-4 font-bold text-gray-700">#{order.id}</td>
+                            <td class="p-4 text-gray-600">
+                                {new Date(order.created_at).toLocaleDateString('pl-PL')}
+                            </td>
+                            <td class="p-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                    {order.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                                     order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}">
+                                    {order.status}
+                                </span>
+                            </td>
+                            <td class="p-4 text-right font-bold text-blue-600">
+                                {order.total_price} zł
+                            </td>
+                        </tr>
                     {/each}
-                </ul>
-            </div>
-        {/each}
-    </div>
-{/if}
-
-<style>
-    .status-pending { color: orange; }
-    .status-completed { color: green; }
-    .status-cancelled { color: red; }
-</style>
+                </tbody>
+            </table>
+        </div>
+    {/if}
+</div>

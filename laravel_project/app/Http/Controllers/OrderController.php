@@ -4,62 +4,66 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderProduct; // Pamiętaj o stworzeniu pustego modelu jeśli nie ma
+use App\Models\OrderItem; // Używamy modelu OrderItem
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class OrderController extends Controller
 {
-    // TRANS. 5.7: Finalizacja zamówienia
+    // POST /api/checkout
     public function checkout(Request $request)
     {
-        // Ponownie pobieramy koszyk po ID sesji
         $sessionId = $request->header('X-Session-ID');
-        $cart = Cart::where('session_id', $sessionId)->with('items')->firstOrFail();
 
-        if ($cart->items->isEmpty()) {
+        // Pobierz koszyk z elementami i produktami (żeby znać cenę)
+        $cart = Cart::with('items.product')->where('session_id', $sessionId)->first();
+
+        if (!$cart || $cart->items->isEmpty()) {
             return response()->json(['error' => 'Koszyk jest pusty'], 400);
         }
 
-        // Oblicz sumę
-        $total = $cart->items->sum(fn($item) => $item->pivot->quantity * $item->price);
+        // Oblicz sumę (CartItem ma relację 'product')
+        $total = $cart->items->sum(function($item) {
+            return $item->quantity * $item->product->price;
+        });
 
-        // Rozpoczynamy transakcję bazodanową (Ważne!)
         return DB::transaction(function () use ($cart, $total, $request) {
             // 1. Stwórz zamówienie
+            // Używamy Auth::id() lub fallback na 1 dla testów
+            $userId = Auth::id() ?? 1;
+
             $order = Order::create([
-                'user_id' => $request->input('user_id', 1), // Tymczasowo ID 1 (np. Guest/Test user)
+                'user_id' => $userId,
                 'status' => 'pending',
-                'price_total' => $total,
-                'ordered_at' => now(),
+                'total_price' => $total, // W migracji dałem 'total_price', nie 'price_total'
             ]);
 
-            // 2. Przenieś produkty z koszyka do order_product
+            // 2. Przenieś produkty z koszyka do order_items
             foreach ($cart->items as $item) {
-                // SQL: INSERT INTO Order_Product ...
-                DB::table('order_product')->insert([
-                    'order_id' => $order->order_id,
+                OrderItem::create([
+                    'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'quantity' => $item->pivot->quantity,
-                    'price_when_purchased' => $item->price, // Zamrażamy cenę!
+                    'quantity' => $item->quantity,
+                    'price' => $item->product->price, // Zamrażamy cenę
                 ]);
             }
 
-            // 3. Wyczyść koszyk (usuń pozycje)
-            DB::table('cart_product')->where('cart_id', $cart->cart_id)->delete();
+            // 3. Wyczyść koszyk (usuwamy items, potem sam koszyk opcjonalnie)
+            $cart->items()->delete();
+            // $cart->delete(); // Można usunąć też sesję koszyka, ale nie trzeba
 
-            return response()->json(['message' => 'Zamówienie złożone', 'order_id' => $order->order_id]);
+            return response()->json(['message' => 'Zamówienie złożone', 'order_id' => $order->id]);
         });
     }
 
-    // TRANS. 5.8: Historia zamówień
+    // GET /api/orders
     public function history(Request $request)
     {
-        $userId = $request->input('user_id', 1); // Pobierane z auth w prawdziwej appce
+        $userId = Auth::id() ?? 1;
 
-        $orders = Order::with('products')
-            ->where('user_id', $userId)
-            ->orderByDesc('ordered_at')
+        $orders = Order::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return response()->json($orders);
