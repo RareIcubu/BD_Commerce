@@ -4,6 +4,7 @@
     import { user } from '../stores';
     import { goto } from '$app/navigation';
     import '../app.css';
+    import  ToastContainer  from "$lib/components/ToastContainer.svelte";
 
     onMount(() => {
         let sessionId = localStorage.getItem('session_id');
@@ -30,7 +31,7 @@
         fetchProducts(`category_id=${id}`);
     }
 </script>
-
+<ToastContainer />
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
