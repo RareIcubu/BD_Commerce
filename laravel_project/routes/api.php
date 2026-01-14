@@ -30,7 +30,7 @@ Route::put('/cart/{product_id}', [CartController::class, 'update']);
 Route::delete('/cart/{product_id}', [CartController::class, 'destroy']);
 
 // --- ZAMÓWIENIA ---
-Route::post('/checkout', [CartController::class, 'checkout']);
+Route::post('/checkout', [OrderController::class, 'checkout']);
 Route::get('/orders', [OrderController::class, 'history']);
 
 // --- PANEL SPRZEDAWCY ---

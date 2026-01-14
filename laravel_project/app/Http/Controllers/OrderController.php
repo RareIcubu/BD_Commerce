@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderItem; // Używamy modelu OrderItem
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -16,53 +15,60 @@ class OrderController extends Controller
     {
         $sessionId = $request->header('X-Session-ID');
 
-        // Pobierz koszyk z elementami i produktami (żeby znać cenę)
-        $cart = Cart::with('items.product')->where('session_id', $sessionId)->first();
+        // 1. Sprawdź czy koszyk istnieje
+        $cart = Cart::with('items')->where('session_id', $sessionId)->first();
 
         if (!$cart || $cart->items->isEmpty()) {
             return response()->json(['error' => 'Koszyk jest pusty'], 400);
         }
 
-        // Oblicz sumę (CartItem ma relację 'product')
+        // 2. Policz sumę
         $total = $cart->items->sum(function($item) {
-            return $item->quantity * $item->product->price;
+            return $item->pivot->quantity * $item->price;
         });
 
-        return DB::transaction(function () use ($cart, $total, $request) {
-            // 1. Stwórz zamówienie
-            // Używamy Auth::id() lub fallback na 1 dla testów
-            $userId = Auth::id() ?? 1;
+        // 3. Transakcja
+        return DB::transaction(function () use ($cart, $total) {
 
+            // "Hardcode Bypass": Jeśli nie wykryto usera, przypisz zamówienie do ID 1
+            $userId = Auth::id() ?: 1;
+
+            // TWORZENIE ZAMÓWIENIA (WERSJA CZYSTA)
+            // Usunąłem wszystkie pola adresowe ('address', 'fullname' itd.),
+            // bo Twoja baza ich nie ma i dlatego wyrzuca błąd 500.
             $order = Order::create([
                 'user_id' => $userId,
                 'status' => 'pending',
-                'total_price' => $total, // W migracji dałem 'total_price', nie 'price_total'
+                'total_price' => $total,
             ]);
 
-            // 2. Przenieś produkty z koszyka do order_items
+            // Przenoszenie produktów
             foreach ($cart->items as $item) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->product->price, // Zamrażamy cenę
+                $order->products()->attach($item->product_id, [
+                    'quantity' => $item->pivot->quantity,
+                    'price_when_purchased' => $item->price
                 ]);
             }
 
-            // 3. Wyczyść koszyk (usuwamy items, potem sam koszyk opcjonalnie)
-            $cart->items()->delete();
-            // $cart->delete(); // Można usunąć też sesję koszyka, ale nie trzeba
+            // Czyścimy koszyk
+            $cart->items()->detach();
+            $cart->delete();
 
-            return response()->json(['message' => 'Zamówienie złożone', 'order_id' => $order->id]);
+            return response()->json([
+                'message' => 'Zamówienie złożone',
+                'order_id' => $order->order_id ?? $order->id
+            ]);
         });
     }
 
     // GET /api/orders
-    public function history(Request $request)
+    public function history()
     {
-        $userId = Auth::id() ?? 1;
+        // Wyświetl historię dla zalogowanego LUB dla usera ID 1
+        $userId = Auth::id() ?: 1;
 
         $orders = Order::where('user_id', $userId)
+            ->with('products')
             ->orderBy('created_at', 'desc')
             ->get();
 
