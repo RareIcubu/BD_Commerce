@@ -12,7 +12,7 @@ class SellerController extends Controller
     {
         // Pobieramy produkty sprzedawcy nr 2 (symulacja)
         // with('category') jest ważne, żeby Svelte wyświetliło nazwę kategorii w tabeli
-        $products = Product::with('category')
+        $products = Product::with('category', 'tags')
             ->where('seller_id', 2)
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
@@ -55,7 +55,11 @@ class SellerController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        $product->update($request->all());
+        $data = $request->except(['tags', '_method']);
+        $product->update($data);
+        if ($request->has('tags')) {
+            $product->tags()->sync($request->tags);
+        }
         return response()->json($product);
     }
 
