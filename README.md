@@ -65,7 +65,7 @@ Platforma sprzedażowa zbudowana w architekturze rozdzielonej, wykorzystująca *
 2. **Kluczowe funkcje dla sprzedawcy (Seller):**
 * **Panel sprzedawcy:** Podstrona, z poziomu której możliwe jest dla sprzedawcy dodanie nowego produktu, przegląd oraz usuwanie aktywnych ofert. Zapewnia szybki dostęp do narzędzi administracyjnych bez konieczności nawigacji po stronie konsumenckiej. 
 
-* **Dodawanie produktów:** Formularz pozwalający na definiowanie nazw, opisów, cen oraz stanów magazynowych.
+* **Dodawanie i modyfikacja produktów:** Formularz pozwalający na definiowanie i modyfikowanie nazw, opisów, tagów, kategorii czy cen.
 
 * **Wycofywanie produktów:** Funkcja usuwania produktów z oferty w przypadku zakończenia ich sprzedaży.
 

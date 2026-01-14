@@ -67,10 +67,8 @@
 
     // --- 2. DODAWANIE PRODUKTU ---
     async function addProduct() {
-        // ZAWSZE używamy POST jako metody HTTP
         const method = 'POST';
         
-        // URL pozostaje bez zmian (z ID lub bez)
         const url = isEditing && editingProductId 
             ? `${API_URL}/seller/products/${editingProductId}` 
             : `${API_URL}/seller/products`; 
@@ -80,7 +78,6 @@
             return;
         }
 
-        // Przygotowujemy dane do wysłania
         const payload: any = {
             name,
             description,
@@ -92,18 +89,16 @@
             is_active: true
         };
 
-        // KLUCZ: Jeśli edytujemy, dodajemy pole _method: 'PUT'
-        // Laravel przechwyci to w Route::put i potraktuje jak właściwy PUT
         if (isEditing) {
             payload['_method'] = 'PUT';
         }
 
         try {
             const res = await fetch(url, {
-                method: method, // To jest teraz zawsze 'POST'
+                method: method,
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json' // Dodaj to, aby Laravel wiedział, że ma zwracać błędy w JSON
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(payload)
             });
@@ -118,7 +113,6 @@
                 notifications.add(data.message || 'Błąd zapisu.', 'error');
             }
         } catch (e) {
-            // Jeśli nadal masz błąd połączenia, sprawdź czy URL w konsoli (F12) jest poprawny
             notifications.add('Błąd połączenia.', 'error');
             console.error("Szczegóły błędu:", e);
         }
