@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cart;
+use App\Models\Order; // <--- WAŻNE: Dodaj ten import
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; // <--- WAŻNE
+use Illuminate\Support\Facades\DB;   // <--- WAŻNE
 
 class CartController extends Controller
 {
@@ -22,18 +25,14 @@ class CartController extends Controller
         $cart = $this->getCart($request);
         if (!$cart) return response()->json([]);
 
-        // Pobieramy produkty w koszyku
         $items = $cart->items;
 
-        // Frontend Svelte oczekuje tablicy obiektów, gdzie każdy ma pole 'product' i 'quantity'.
-        // Eloquent przy relacji belongsToMany zwraca listę produktów, gdzie ilość jest ukryta w 'pivot'.
-        // Musimy to przemapować:
         $formattedItems = $items->map(function ($product) use ($cart) {
             return [
                 'cart_id' => $cart->cart_id,
                 'product_id' => $product->product_id,
-                'quantity' => $product->pivot->quantity, // Ilość bierzemy z tabeli łączącej
-                'product' => $product // Cały obiekt produktu wstawiamy jako pole 'product'
+                'quantity' => $product->pivot->quantity,
+                'product' => $product
             ];
         });
 
@@ -47,28 +46,19 @@ class CartController extends Controller
         $productId = $request->input('product_id');
         $quantity = $request->input('quantity', 1);
 
-        // Sprawdzamy, czy ten produkt już jest w koszyku (przez relację items)
-        // where('products.product_id') jest bezpieczniejsze przy joinach, ale tu wystarczy po prostu sprawdzenie kolekcji
-        // lub zapytanie:
         $existingProduct = $cart->items()->where('cart_product.product_id', $productId)->first();
 
         if ($existingProduct) {
-            // Produkt jest - aktualizujemy ilość
-            // Pobieramy starą ilość z pivot i dodajemy nową
             $newQuantity = $existingProduct->pivot->quantity + $quantity;
-
-            $cart->items()->updateExistingPivot($productId, [
-                'quantity' => $newQuantity
-            ]);
+            $cart->items()->updateExistingPivot($productId, ['quantity' => $newQuantity]);
         } else {
-            // Produktu nie ma - dodajemy (attach)
-            $cart->items()->attach($productId, [
-                'quantity' => $quantity
-            ]);
+            $cart->items()->attach($productId, ['quantity' => $quantity]);
         }
 
         return response()->json(['message' => 'Dodano do koszyka']);
     }
+
+    // PUT /api/cart/{id}
     public function update(Request $request, $productId)
     {
         $cart = $this->getCart($request);
@@ -76,28 +66,70 @@ class CartController extends Controller
 
         if ($cart) {
             if ($quantity <= 0) {
-                // Jeśli ilość <= 0, usuwamy produkt
                 $cart->items()->detach($productId);
             } else {
-                // Aktualizujemy ilość w tabeli pivot
-                $cart->items()->updateExistingPivot($productId, [
-                    'quantity' => $quantity
-                ]);
+                $cart->items()->updateExistingPivot($productId, ['quantity' => $quantity]);
             }
         }
 
         return response()->json(['message' => 'Zaktualizowano ilość']);
     }
+
     // DELETE /api/cart/{id}
     public function destroy(Request $request, $productId)
     {
         $cart = $this->getCart($request);
-
         if ($cart) {
-            // Odłączamy produkt (usuwamy z tabeli pivot)
             $cart->items()->detach($productId);
         }
-
         return response()->json(['message' => 'Usunięto z koszyka']);
+    }
+
+    // --- NOWOŚĆ: METODA CHECKOUT ---
+    // POST /api/checkout
+    public function checkout(Request $request)
+    {
+        $sessionId = $request->header('X-Session-ID');
+
+        // 1. Pobierz koszyk
+        $cart = Cart::with('items')->where('session_id', $sessionId)->first();
+
+        if (!$cart || $cart->items->isEmpty()) {
+            return response()->json(['error' => 'Koszyk jest pusty'], 400);
+        }
+
+        // 2. Policz sumę
+        $total = $cart->items->sum(function($item) {
+            return $item->pivot->quantity * $item->price;
+        });
+
+        // 3. Zapisz zamówienie (Transakcja)
+        return DB::transaction(function () use ($cart, $total) {
+            $userId = Auth::id(); // Jeśli zalogowany, przypisz ID. Jeśli nie - NULL.
+
+            // Tworzymy proste zamówienie (bez adresu, żeby nie było błędów)
+            $order = Order::create([
+                'user_id' => $userId,
+                'status' => 'pending',
+                'total_price' => $total,
+            ]);
+
+            // Przenosimy produkty
+            foreach ($cart->items as $item) {
+                $order->products()->attach($item->product_id, [
+                    'quantity' => $item->pivot->quantity,
+                    'price_when_purchased' => $item->price
+                ]);
+            }
+
+            // Czyścimy koszyk
+            $cart->items()->detach();
+            $cart->delete();
+
+            return response()->json([
+                'message' => 'Zamówienie złożone',
+                'order_id' => $order->order_id // Upewnij się czy w modelu masz order_id czy id
+            ]);
+        });
     }
 }

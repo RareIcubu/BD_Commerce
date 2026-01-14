@@ -30,7 +30,7 @@ Route::put('/cart/{product_id}', [CartController::class, 'update']);
 Route::delete('/cart/{product_id}', [CartController::class, 'destroy']);
 
 // --- ZAMÓWIENIA ---
-Route::post('/checkout', [OrderController::class, 'checkout']);
+Route::post('/checkout', [CartController::class, 'checkout']);
 Route::get('/orders', [OrderController::class, 'history']);
 
 // --- PANEL SPRZEDAWCY ---
@@ -40,7 +40,6 @@ Route::get('/seller/products', [SellerController::class, 'index']);
 Route::post('/seller/products', [SellerController::class, 'store']);
 Route::put('/seller/products/{id}', [SellerController::class, 'update']);
 Route::delete('/seller/products/{id}', [SellerController::class, 'destroy']);
-
 // --- AUTORYZACJA ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
